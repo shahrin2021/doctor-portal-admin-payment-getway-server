@@ -33,7 +33,7 @@ if(req.headers.authorization?.startsWith('Bearer ')){
     try{
         const decodeteUser= await admin.auth().verifyIdToken(token);
         req.decodeteEmail = decodeteUser.email;
-    }finally{
+    }catch{
 
     }
 }
@@ -54,7 +54,7 @@ async function run(){
             const appointment= req.body;
             const result = await appointmentCollection.insertOne(appointment)
             console.log(result)
-            res.json({message:'hello'})
+            res.json(result)
         })
 
         app.get('/appointments/:id', async(req,res)=>{
@@ -74,6 +74,19 @@ async function run(){
             const appointments = await cursor.toArray();
             res.json(appointments)
         });
+
+        app.put('/appointments/:id', async (req, res)=>{
+            const id = req.params.id;
+            const payment= req.body;
+            const query = {_id: ObjectId(id)}
+            const updateDoc ={
+                $set:{
+                    payment: payment
+                }
+            }
+            const result = await appointmentCollection.updateOne(query , updateDoc)
+            res.json(result)
+        })
 
         app.get('/users/:email', async(req, res)=>{
             const email= req.params.email;
@@ -125,6 +138,8 @@ async function run(){
             
         });
 
+
+
         // 
 
         app.post('/create-payment-intent', async(req, res)=>{
@@ -135,6 +150,7 @@ async function run(){
                 amount:amount,
                 payment_method_types:['card']
             });
+            console.log('payment dd',paymentIntent )
             res.json({clientSecret: paymentIntent.client_secret} )
         })
 

@@ -7,8 +7,12 @@ const cors = require('cors');
 const  admin = require("firebase-admin");
 const ObjectId = require('mongodb').ObjectId;
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
+const fileUplode = require('express-fileupload');
+
 app.use(cors());
 app.use(express.json());
+
+app.use(fileUplode())
 
 //  pass :jq795eP3Ni9dxTuI  doctorPortal
 // doctor-portal-service-firebase-adminsdk-33m53-ca6e4ec2c2
@@ -48,6 +52,7 @@ async function run(){
         const database= client.db('doctors_portal');
         const appointmentCollection= database.collection('appointments');
         const usreCollection= database.collection('users')
+        const doctorsCollection= database.collection('doctors')
         console.log('database connect');
 
         app.post('/appointments', async(req, res)=>{
@@ -87,6 +92,34 @@ async function run(){
             const result = await appointmentCollection.updateOne(query , updateDoc)
             res.json(result)
         })
+
+            app.post('/doctors', async(req, res)=>{
+                    const name= req.body.name;
+                    const email= req.body.email;
+                    const image = req.files.image;
+                    const imageData= image.data;
+                    const encodedImage= imageData.toString('base64');
+                    const imageBuffer= Buffer.from(encodedImage,'base64');
+                    const doctors = {
+                        name,
+                        email, 
+                        image:imageBuffer 
+                    }
+
+                    const result = await doctorsCollection.insertOne(doctors)
+                    console.log('body' , req.body)
+                    console.log('files' , req.files)
+                    res.json(result)
+            })
+
+            app.get('/doctors', async(req, res)=>{
+                const cursor = doctorsCollection.find({})
+                const doctors = await cursor.toArray();
+                res.json(doctors)
+            })
+
+
+
 
         app.get('/users/:email', async(req, res)=>{
             const email= req.params.email;
@@ -181,3 +214,12 @@ app.listen(port, ()=>{
 // app.put('/users/:id')
 // app.delete('/users/:id')
 // app.post('/users')
+
+// image uplode  in express 
+/*
+1.express file uplode
+2.inastall in surversite
+3. buffer
+
+
+*/
